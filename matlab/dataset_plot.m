@@ -15,9 +15,9 @@ NBody = length(dataset.body);
 for iBody = 1:NBody
   
   % plot body (sensor configuration)
-  figure();
-  dataset_plot_body(dataset.body{iBody});
-  title('sensor setup');
+%   figure();
+%   dataset_plot_body(dataset.body{iBody});
+%   title('sensor setup');
   
   % plot trajectory, including sensor configuration
   figure();
@@ -25,10 +25,10 @@ for iBody = 1:NBody
   title('body trajectory');
   
   % plot gyroscope and accelerometer measurements
-  dataset_plot_inertial_sensor_measurements(dataset.body{iBody});
+%   dataset_plot_inertial_sensor_measurements(dataset.body{iBody});
   
   % plot target observations
-  dataset_plot_target_observations(dataset.body{iBody});
+%   dataset_plot_target_observations(dataset.body{iBody});
 end
 
 disp(' ');

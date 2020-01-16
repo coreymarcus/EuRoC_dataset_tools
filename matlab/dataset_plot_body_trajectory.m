@@ -29,7 +29,7 @@ end
 if(NTrajectory > 0)
   q_plotPose(p_RS_R_(:, 1), q_RS_(:, 1), '', 0.5);
   for i=SubsampleFactor+1:SubsampleFactor:NTrajectory
-    q_plotPose(p_RS_R_(:, i), q_RS_(:, i), '', 0.05);
+    q_plotPose(p_RS_R_(:, i), q_RS_(:, i), '', 0.15);
   end
   plot3(p_RS_R_(1, :), p_RS_R_(2, :), p_RS_R_(3, :), 'k');
 end

@@ -10,8 +10,11 @@
 addpath('quaternion');
 
 % set dataset folder
-datasetPath = ...
-  '~/nas_mapbox/Datasets/Euroc-Datasets/ijrr_dataset_paper/vicon_room1/01_easy';
+% datasetPath = ...
+%   '~/nas_mapbox/Datasets/Euroc-Datasets/ijrr_dataset_paper/vicon_room1/01_easy';
+
+% datasetPath = '~/Documents/EuRoC/V1_01_easy';
+datasetPath = '~/Documents/EuRoC/V2_01_easy';
 
 disp(' ');
 disp([' > dataset_load_test [', datasetPath, ']']);
@@ -24,3 +27,6 @@ dataset = dataset_load(datasetPath);
 
 % plot dataset
 dataset_plot(dataset);
+
+% plot point cloud
+
