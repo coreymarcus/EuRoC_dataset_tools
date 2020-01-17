@@ -12,13 +12,15 @@ LidarFOVHeight = pi/2; %radians
 LidarFOVWidth = 3*pi/4; %radians
 % LidarFOVHeight = .01; %radians
 % LidarFOVWidth = .01; %radians
-LidarArrayWidth = 64;
-LidarArrayHeight = 64;
+LidarArrayWidth = 16;
+LidarArrayHeight = 16;
+pointCloudDownSample = 5; %1 for take every point
 
 %% Main
 
 %load dataset
 datasetPath = '~/Documents/EuRoC/V2_01_easy';
+addpath('quaternion');
 dataset = dataset_load(datasetPath);
 
 %rotations and translations
@@ -64,53 +66,18 @@ LidarYawAngles = linspace(-LidarFOVWidth/2,LidarFOVWidth/2,LidarArrayWidth);
 LidarPitchAngles = linspace(LidarFOVHeight/2,-LidarFOVHeight/2,LidarArrayHeight); %note intentional sign reversal
 
 %create lidar image arrays
-LidarImages = zeros(LidarArrayHeight,LidarArrayWidth,L);
+% LidarImages = zeros(LidarArrayHeight,LidarArrayWidth,L);
 
 %build lidar images
 tic
-% for ii = 1:1 %iteration on images
-%     parfor jj = 1:LidarArrayHeight
-%         for kk = 1:LidarArrayWidth
-% %             tic
-%             %create quaternion corresponding to this angle
-%             Q_cam2lidarray = angle2quat(LidarYawAngles(kk),LidarPitchAngles(jj),0,'ZXY');
-%             
-%             %generate a lidar ray in the inertial frame
-%             Q_inertial2lidarray = quatmultiply(Q_inertial2cam(:,matchedInertialIdxs(ii))',...
-%                 Q_cam2lidarray);
-%             
-%             %transform point cloud to lidar frame
-%             pointCloudTrans = quatrotate(Q_inertial2lidarray, ...
-%                 pointCloud - P_inertial2cam(:,matchedInertialIdxs(ii))');
-% %             toc
-%             
-%             %find valid indicies in the point cloud trans
-% %             tic
-%             validIdxs = (pointCloudTrans(:,3) > .1) & (abs(pointCloudTrans(:,1)) < 0.01) ...
-%                 & (abs(pointCloudTrans(:,2)) < 0.01);
-% %             toc
-%             
-%             %closest point to lidar accepted as return
-% %             tic
-% %             validIdxsNum = find(validIdxs);
-% %             toc
-% %             tic
-%             [range, returnIdx] = min(pointCloudTrans(validIdxs,3));
-%             
-%             if ~isempty(range)
-%                 LidarImages(jj,kk,ii) = range;
-%             end
-% %             toc
-%         end
-%         disp(jj)
-%     end
-% end
 
-[LidarImages] = lidarImageBuild(LidarArrayHeight,...
-    LidarArrayWidth, LidarYawAngles, LidarPitchAngles, Q_inertial2cam,...
-    matchedInertialIdxs, P_inertial2cam, pointCloud);
+LidarImages = lidarImageBuild(LidarArrayHeight,...
+    LidarArrayWidth, LidarYawAngles, LidarPitchAngles, 2, Q_inertial2cam,...
+    matchedInertialIdxs, P_inertial2cam, pointCloud(1:pointCloudDownSample:end,:));
 
 toc
+
+save('LidarImages','LidarImages')
 
 %% plotting
 
