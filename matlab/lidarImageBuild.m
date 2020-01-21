@@ -5,8 +5,13 @@ function [LidarImages] = lidarImageBuild(LidarArrayHeight,...
 
 LidarImages = zeros(LidarArrayHeight,LidarArrayWidth,NumImages);
 
+%convert point cloud to spherical coordinates
+tic
+[az, el, r] = cart2sph(pointCloud(:,1),pointCloud(:,2),pointCloud(:,3));
+toc
+
 for ii = 1:NumImages %iteration on images
-    parfor jj = 1:LidarArrayHeight
+    for jj = 1:LidarArrayHeight
         for kk = 1:LidarArrayWidth
             %             tic
             %create quaternion corresponding to this angle
