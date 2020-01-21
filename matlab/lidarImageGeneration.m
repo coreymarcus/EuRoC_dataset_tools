@@ -8,14 +8,15 @@ close all
 clc
 
 %% Options
-LidarFOVHeight = pi/10; %radians
+LidarFOVHeight = pi/6; %radians
 LidarFOVWidth = pi/4; %radians
 % LidarFOVHeight = .01; %radians
 % LidarFOVWidth = .01; %radians
 LidarArrayWidth = 50;
 LidarArrayHeight = 50;
 lidarPointSwath = pi/180; %1 degree lidar point return
-lidarImageRate = 100; %one to create lidar image for every camera image
+lidarImageRate = 1; %one to create lidar image for every camera image
+trackPoints = false; %tracks points pinged for debugging
 
 %% Main
 
@@ -80,8 +81,9 @@ Q_lidar2azEl = angle2quat(-pi/2,pi/2,0,'YXZ');
 
 %images to operate on
 imageIdx = 1:lidarImageRate:L;
+% imageIdx = 1;
 
-for ii = imageIdx %iteration on images
+parfor ii = imageIdx %iteration on images
     
     %shift point cloud to camera origin
     pointCloudShift = pointCloud - P_inertial2cam(:,matchedInertialIdxs(ii))';
@@ -105,12 +107,12 @@ for ii = imageIdx %iteration on images
     boreElMax = boreEl + lidarFOVMax + pi/6;
     
     %different cases depending on if yaw and pitch need wrapping
-    if (boreAzMin > -pi) & (boreAzMax < pi) %nominal case
+    if (boreAzMin > -pi) && (boreAzMax < pi) %nominal case
         azValid = (az > boreAzMin) & (az < boreAzMax);
-    elseif (boreAzMin <= -pi) & (boreAzMax < pi) %wrap below
+    elseif (boreAzMin <= -pi) && (boreAzMax < pi) %wrap below
         boreAzMin = boreAzMin + 2*pi;
         azValid = (az > boreAzMin) | (az < boreAzMax);
-    elseif (boreAzMin > -pi) & (boreAzMax >= pi) %wrap above
+    elseif (boreAzMin > -pi) && (boreAzMax >= pi) %wrap above
         boreAzMax = boreAzMax - 2*pi;
         azValid = (az > boreAzMin) | (az < boreAzMax);
     else
@@ -119,13 +121,13 @@ for ii = imageIdx %iteration on images
     
     if (boreElMin > -pi/2) && (boreElMax < pi/2) %nominal case
         elValid = (el > boreElMin) & (el < boreElMax);
-    elseif (boreElMin <= -pi/2) & (boreElMax < pi/2) %wrap below
+    elseif (boreElMin <= -pi/2) && (boreElMax < pi/2) %wrap below
         boreElMin = boreElMin + pi;
         elValid = (el > boreElMin) | (el < boreElMax);
-    elseif (boreElMin > -pi/2) & (boreElMax >= pi/2) %wrap above
+    elseif (boreElMin > -pi/2) && (boreElMax >= pi/2) %wrap above
         boreElMax = boreElMax - pi;
         elValid = (el > boreElMin) | (el < boreElMax);
-    elseif (boreElMin <= -pi/2) & (boreElMax >= pi/2) %all points visible
+    elseif (boreElMin <= -pi/2) && (boreElMax >= pi/2) %all points visible
         elValid = true(length(el),1);
     else
         disp('Bounding Error!')
@@ -165,27 +167,27 @@ for ii = imageIdx %iteration on images
             
             %find vaild points
             %different cases depending on if yaw and pitch need wrapping
-            if (ptAzMin > -pi) & (ptAzMax < pi) %nominal case
+            if (ptAzMin > -pi) && (ptAzMax < pi) %nominal case
                 azValidPt = (azValid > ptAzMin) & (azValid < ptAzMax);
-            elseif (ptAzMin <= -pi) & (ptAzMax < pi) %wrap below
+            elseif (ptAzMin <= -pi) && (ptAzMax < pi) %wrap below
                 ptAzMin = ptAzMin + 2*pi;
                 azValidPt = (azValid > ptAzMin) | (azValid < ptAzMax);
-            elseif (ptAzMin > -pi) & (ptAzMax >= pi) %wrap above
+            elseif (ptAzMin > -pi) && (ptAzMax >= pi) %wrap above
                 ptAzMax = ptAzMax - 2*pi;
                 azValidPt = (azValid > ptAzMin) | (azValid < ptAzMax);
             else
                 disp('Bounding Error!')
             end
             
-            if (ptElMin > -pi/2) & (ptElMax < pi/2) %nominal case
+            if (ptElMin > -pi/2) && (ptElMax < pi/2) %nominal case
                 elValidPt = (elValid > ptElMin) & (elValid < ptElMax);
-            elseif (ptElMin <= -pi/2) & (ptElMax < pi/2) %wrap below
+            elseif (ptElMin <= -pi/2) && (ptElMax < pi/2) %wrap below
                 ptElMin = ptElMin + pi;
                 elValidPt = (elValid > ptElMin) | (elValid < ptElMax);
-            elseif (ptElMin > -pi/2) & (ptElMax >= pi/2) %wrap above
+            elseif (ptElMin > -pi/2) && (ptElMax >= pi/2) %wrap above
                 ptElMax = ptElMax - pi;
                 elValidPt = (elValid > ptElMin) | (elValid < ptElMax);
-            elseif (ptElMin <= -pi/2) & (ptElMax >= pi/2) %all points visible
+            elseif (ptElMin <= -pi/2) && (ptElMax >= pi/2) %all points visible
                 elValidPt = true(length(elValid),1);
             else
                 disp('Bounding Error!')
@@ -201,13 +203,13 @@ for ii = imageIdx %iteration on images
             
             %assign range
             if ~isempty(candr)
-                [ptRange, I] = min(candr);
+                [ptRange, ptIdx] = min(candr);
                 LidarImages(jj,kk,ii) = ptRange;
             end
             
             %track points for debugging
-            if ~isempty(candr)
-                [returnPtX, returnPtY, returnPtZ] = sph2cart(candAz(I),candEl(I),candr(I));
+            if ~isempty(candr) && trackPoints
+                [returnPtX, returnPtY, returnPtZ] = sph2cart(candAz(ptIdx),candEl(ptIdx),candr(ptIdx));
                 returnPtMat = [returnPtMat;
                     [returnPtX, returnPtY, returnPtZ] + P_inertial2cam(:,matchedInertialIdxs(ii))'];
             end
@@ -271,36 +273,37 @@ save('LidarImages','LidarImages')
 % axis([-5 5 -5 5 0 3])
 
 %plot camera position and return point positions
-figure
-plot3(P_inertial2cam(1,:),P_inertial2cam(2,:),P_inertial2cam(3,:))
-hold on
-scatter3(returnPtMat(:,1), returnPtMat(:,2), returnPtMat(:,3))
-scatter3(P_inertial2body(1,1),P_inertial2body(2,1),P_inertial2body(3,1))
-quiver3(P_inertial2cam(1,matchedInertialIdxs(imageIdx)),...
-    P_inertial2cam(2,matchedInertialIdxs(imageIdx)),...
-    P_inertial2cam(3,matchedInertialIdxs(imageIdx)),...
-    Barrel_camInInertial(1,matchedInertialIdxs(imageIdx)),...
-    Barrel_camInInertial(2,matchedInertialIdxs(imageIdx)),...
-    Barrel_camInInertial(3,matchedInertialIdxs(imageIdx)),0)
-xlabel('x')
-ylabel('y')
-zlabel('z')
-
-%plot point cloud and return point positions
-figure
-scatter3(pointCloud(1:10:end,1),pointCloud(1:10:end,2),pointCloud(1:10:end,3))
-hold on
-scatter3(returnPtMat(:,1), returnPtMat(:,2), returnPtMat(:,3))
-scatter3(P_inertial2body(1,1),P_inertial2body(2,1),P_inertial2body(3,1))
-quiver3(P_inertial2cam(1,matchedInertialIdxs(imageIdx)),...
-    P_inertial2cam(2,matchedInertialIdxs(imageIdx)),...
-    P_inertial2cam(3,matchedInertialIdxs(imageIdx)),...
-    Barrel_camInInertial(1,matchedInertialIdxs(imageIdx)),...
-    Barrel_camInInertial(2,matchedInertialIdxs(imageIdx)),...
-    Barrel_camInInertial(3,matchedInertialIdxs(imageIdx)),0)
-xlabel('x')
-ylabel('y')
-zlabel('z')
-axis([-6 6 -5 5 -1 3])
-
+if trackPoints
+    figure
+    plot3(P_inertial2cam(1,:),P_inertial2cam(2,:),P_inertial2cam(3,:))
+    hold on
+    scatter3(returnPtMat(:,1), returnPtMat(:,2), returnPtMat(:,3))
+    scatter3(P_inertial2body(1,1),P_inertial2body(2,1),P_inertial2body(3,1))
+    quiver3(P_inertial2cam(1,matchedInertialIdxs(imageIdx)),...
+        P_inertial2cam(2,matchedInertialIdxs(imageIdx)),...
+        P_inertial2cam(3,matchedInertialIdxs(imageIdx)),...
+        Barrel_camInInertial(1,matchedInertialIdxs(imageIdx)),...
+        Barrel_camInInertial(2,matchedInertialIdxs(imageIdx)),...
+        Barrel_camInInertial(3,matchedInertialIdxs(imageIdx)),0)
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
+    
+    %plot point cloud and return point positions
+    figure
+    scatter3(pointCloud(1:10:end,1),pointCloud(1:10:end,2),pointCloud(1:10:end,3))
+    hold on
+    scatter3(returnPtMat(:,1), returnPtMat(:,2), returnPtMat(:,3))
+    scatter3(P_inertial2body(1,1),P_inertial2body(2,1),P_inertial2body(3,1))
+    quiver3(P_inertial2cam(1,matchedInertialIdxs(imageIdx)),...
+        P_inertial2cam(2,matchedInertialIdxs(imageIdx)),...
+        P_inertial2cam(3,matchedInertialIdxs(imageIdx)),...
+        Barrel_camInInertial(1,matchedInertialIdxs(imageIdx)),...
+        Barrel_camInInertial(2,matchedInertialIdxs(imageIdx)),...
+        Barrel_camInInertial(3,matchedInertialIdxs(imageIdx)),0)
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
+    axis([-6 6 -5 5 -1 3])
+end
 
