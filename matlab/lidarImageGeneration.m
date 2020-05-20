@@ -12,11 +12,11 @@ LidarFOVHeight = pi/6; %radians
 LidarFOVWidth = pi/4; %radians
 % LidarFOVHeight = .01; %radians
 % LidarFOVWidth = .01; %radians
-LidarArrayWidth = 50;
-LidarArrayHeight = 50;
+LidarArrayWidth = 5;
+LidarArrayHeight = 5;
 lidarPointSwath = pi/180; %1 degree lidar point return
 lidarImageRate = 1; %one to create lidar image for every camera image
-trackPoints = false; %tracks points pinged for debugging
+trackPoints = true; %tracks points pinged for debugging
 
 %% Main
 
@@ -74,11 +74,11 @@ LidarPitchAngles = linspace(-LidarFOVHeight/2,LidarFOVHeight/2,LidarArrayHeight)
 FID = fopen('lidarCalib.csv','w');
 fprintf(FID,'%3i, %3i, \n', LidarArrayWidth, LidarArrayHeight);
 for ii = 1:LidarArrayWidth
-    fprintf(FID,'%8f, ',-LidarYawAngles(ii));
+    fprintf(FID,'%8f, ',LidarYawAngles(ii));
 end
 fprintf(FID,'\n');
 for ii = 1:LidarArrayHeight
-    fprintf(FID,'%8f, ',-LidarPitchAngles(ii));
+    fprintf(FID,'%8f, ',LidarPitchAngles(ii));
 end
 fclose(FID);
 
@@ -93,8 +93,8 @@ returnPtMat = [];
 Q_lidar2azEl = angle2quat(-pi/2,pi/2,0,'YXZ');
 
 %images to operate on
-imageIdx = 1:lidarImageRate:L;
-% imageIdx = 1;
+% imageIdx = 1:lidarImageRate:L;
+imageIdx = 1;
 
 parfor ii = imageIdx %iteration on images
     
@@ -304,7 +304,8 @@ if trackPoints
     
     %plot point cloud and return point positions
     figure
-    scatter3(pointCloud(1:10:end,1),pointCloud(1:10:end,2),pointCloud(1:10:end,3))
+    scatter3(pointCloud(1:1:end,1),pointCloud(1:1:end,2),pointCloud(1:1:end,3),...
+    1,'filled')
     hold on
     scatter3(returnPtMat(:,1), returnPtMat(:,2), returnPtMat(:,3))
     scatter3(P_inertial2body(1,1),P_inertial2body(2,1),P_inertial2body(3,1))
@@ -317,6 +318,7 @@ if trackPoints
     xlabel('x')
     ylabel('y')
     zlabel('z')
-    axis([-6 6 -5 5 -1 3])
+%     axis([-6 6 -5 5 -1 3])
+    axis([-4.75 -4 .6 1.8 0.75 1])
 end
 
