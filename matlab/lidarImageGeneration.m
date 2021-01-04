@@ -67,18 +67,18 @@ for ii = 1:L
 end
 
 %build lidar angle array
-LidarYawAngles = linspace(LidarFOVWidth/2,-LidarFOVWidth/2,LidarArrayWidth); %note intentional sign reversal
-LidarPitchAngles = linspace(-LidarFOVHeight/2,LidarFOVHeight/2,LidarArrayHeight);
+LidarAzAngles = linspace(-LidarFOVWidth/2, LidarFOVWidth/2,LidarArrayWidth); 
+LidarElAngles = linspace(LidarFOVHeight/2, -LidarFOVHeight/2,LidarArrayHeight); %note intentional sign reversal
 
 %create a calibration output
 FID = fopen('lidarCalib.csv','w');
 fprintf(FID,'%3i, %3i, \n', LidarArrayWidth, LidarArrayHeight);
 for ii = 1:LidarArrayWidth
-    fprintf(FID,'%8f, ',LidarYawAngles(ii));
+    fprintf(FID,'%8f, ',LidarAzAngles(ii));
 end
 fprintf(FID,'\n');
 for ii = 1:LidarArrayHeight
-    fprintf(FID,'%8f, ',LidarPitchAngles(ii));
+    fprintf(FID,'%8f, ',LidarElAngles(ii));
 end
 fclose(FID);
 
@@ -158,7 +158,7 @@ parfor ii = imageIdx %iteration on images
         for kk = 1:LidarArrayWidth
             
             %create quaternion corresponding to this angle
-            Q_cam2lidarPt = angle2quatComp(LidarYawAngles(kk),LidarPitchAngles(jj),0,'ZYX');
+            Q_cam2lidarPt = angle2quatComp(LidarAzAngles(kk),LidarElAngles(jj),0,'ZYX');
             
             %create quaternion from inertial to this array point
             Q_inertial2lidarPt = quatmultiply(...
