@@ -26,7 +26,8 @@ PLidar = .01^2; % lidar range variance, m^2
 lidarFOVMax = max([LidarFOVHeight/2, LidarFOVWidth/2]);
 
 %load dataset
-datasetPath = '~/Documents/EuRoC/V2_01_easy';
+% datasetPath = '~/Documents/EuRoC/V2_01_easy';
+datasetPath = 'C:\Users\cm58349\Documents\EuRoC_data\V2_01_easy';
 addpath('quaternion');
 dataset = dataset_load(datasetPath);
 
@@ -95,8 +96,8 @@ returnPtMat = [];
 Q_lidar2azEl = angle2quat(-pi/2,pi/2,0,'YXZ');
 
 %images to operate on
-% imageIdx = 1:lidarImageRate:L;
-imageIdx = 1;
+imageIdx = 1:lidarImageRate:L;
+% imageIdx = 1;
 
 parfor ii = imageIdx %iteration on images
     
@@ -155,6 +156,9 @@ parfor ii = imageIdx %iteration on images
     azValid = az(validIdx);
     elValid = el(validIdx);
     rvalid = r(validIdx);
+    
+    %generate noise
+    range_noise = mvnrnd(MuLidar*ones(LidarArrayHeight*LidarArrayWidth,1), PLidar*eye(LidarArrayHeight*LidarArrayWidth));
     
     for jj = 1:LidarArrayHeight
         for kk = 1:LidarArrayWidth
@@ -219,14 +223,11 @@ parfor ii = imageIdx %iteration on images
             %assign range
             if ~isempty(candr)
                 
-                %generate noise
-                range_noise = mvnrnd(MuLidar, PLidar);
-                
                 %get point
                 [ptRange, ptIdx] = min(candr);
                 
                 %add noise
-                ptRange = ptRange + range_noise;
+                ptRange = ptRange + range_noise(jj + (kk-1)*LidarArrayHeight);
                 
                 %make sure it is not less than zero
                 if(ptRange < 0)
