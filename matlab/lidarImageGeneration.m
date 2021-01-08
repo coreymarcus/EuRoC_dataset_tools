@@ -12,8 +12,8 @@ LidarFOVHeight = pi/6; %radians
 LidarFOVWidth = pi/4; %radians
 % LidarFOVHeight = .01; %radians
 % LidarFOVWidth = .01; %radians
-LidarArrayWidth = 5;
-LidarArrayHeight = 5;
+LidarArrayWidth = 50;
+LidarArrayHeight = 50;
 lidarPointSwath = pi/180; %1 degree lidar point return
 lidarImageRate = 1; %one to create lidar image for every camera image
 trackPoints = true; %tracks points pinged for debugging
@@ -67,7 +67,7 @@ for ii = 1:L
 end
 
 %build lidar angle array
-LidarAzAngles = linspace(-LidarFOVWidth/2, LidarFOVWidth/2,LidarArrayWidth); 
+LidarAzAngles = linspace(-LidarFOVWidth/2, LidarFOVWidth/2,LidarArrayWidth);
 LidarElAngles = linspace(LidarFOVHeight/2, -LidarFOVHeight/2,LidarArrayHeight); %note intentional sign reversal
 
 %create a calibration output
@@ -90,11 +90,11 @@ returnPtMat = [];
 
 %Create a quaternion to rotate between a camera frame and an azimuth,
 %elevation frame
-Q_lidar2azEl = angle2quat(-pi/2,pi/2,0,'YXZ');
+% Q_lidar2azEl = angle2quat(-pi/2,pi/2,0,'YXZ');
 
 %images to operate on
-% imageIdx = 1:lidarImageRate:L;
-imageIdx = 1;
+imageIdx = 1:lidarImageRate:L;
+% imageIdx = L-150;
 
 parfor ii = imageIdx %iteration on images
     
@@ -104,73 +104,94 @@ parfor ii = imageIdx %iteration on images
     %convert point cloud to spherical coordinates centered on camera
     [az, el, r] = cart2sph(pointCloudShift(:,1),pointCloudShift(:,2),pointCloudShift(:,3));
     
-    %create euler angles for current lidar bore sight
-    [boreYaw, borePitch, boreRoll] = quat2angle(...
-        quatmultiply(Q_inertial2cam(:,matchedInertialIdxs(ii))',...
-        Q_lidar2azEl),'ZYX');
+    %     %extract current boresight vector
+    %     boresight_vec = Barrel_camInInertial(:,ii);
+    %
+    %     %get euler angles for bore sight
+    %     boreEl = asin(boresight_vec(3));
+    %     v_xy = sqrt(boresight_vec(1)^2 + boresight_vec(2)^2);
+    %     boreAz = atan2(boresight_vec(2),boresight_vec(1));
+    %
+    %     %purge points far out of view of lidar
+    %     boreAzMin = boreAz - lidarFOVMax - pi/6;
+    %     boreAzMax = boreAz + lidarFOVMax + pi/6;
+    %     boreElMin = boreEl - lidarFOVMax - pi/6;
+    %     boreElMax = boreEl + lidarFOVMax + pi/6;
+    %
+    %     %different cases depending on if yaw and pitch need wrapping
+    %     if (boreAzMin > -pi) && (boreAzMax < pi) %nominal case
+    %         azValid = (az > boreAzMin) & (az < boreAzMax);
+    %     elseif (boreAzMin <= -pi) && (boreAzMax < pi) %wrap below
+    %         boreAzMin = boreAzMin + 2*pi;
+    %         azValid = (az > boreAzMin) | (az < boreAzMax);
+    %     elseif (boreAzMin > -pi) && (boreAzMax >= pi) %wrap above
+    %         boreAzMax = boreAzMax - 2*pi;
+    %         azValid = (az > boreAzMin) | (az < boreAzMax);
+    %     else
+    %         disp('Bounding Error!')
+    %     end
+    %
+    %     if (boreElMin > -pi/2) && (boreElMax < pi/2) %nominal case
+    %         elValid = (el > boreElMin) & (el < boreElMax);
+    %     elseif (boreElMin <= -pi/2) && (boreElMax < pi/2) %wrap below
+    %         boreElMin = boreElMin + pi;
+    %         elValid = (el > boreElMin) | (el < boreElMax);
+    %     elseif (boreElMin > -pi/2) && (boreElMax >= pi/2) %wrap above
+    %         boreElMax = boreElMax - pi;
+    %         elValid = (el > boreElMin) | (el < boreElMax);
+    %     elseif (boreElMin <= -pi/2) && (boreElMax >= pi/2) %all points visible
+    %         elValid = true(length(el),1);
+    %     else
+    %         disp('Bounding Error!')
+    %     end
+    %
+    %     %indicies within range of lidar
+    %     validIdx = azValid & elValid;
+    %
+    %     %valid points
+    %     azValid = az(validIdx);
+    %     elValid = el(validIdx);
+    %     rvalid = r(validIdx);
     
-    %yaw = azimuth, but pitch = negative elevation
-    boreAz = boreYaw;
-    boreEl = -borePitch;
-    
-    %purge points far out of view of lidar
-    boreAzMin = boreAz - lidarFOVMax - pi/6;
-    boreAzMax = boreAz + lidarFOVMax + pi/6;
-    boreElMin = boreEl - lidarFOVMax - pi/6;
-    boreElMax = boreEl + lidarFOVMax + pi/6;
-    
-    %different cases depending on if yaw and pitch need wrapping
-    if (boreAzMin > -pi) && (boreAzMax < pi) %nominal case
-        azValid = (az > boreAzMin) & (az < boreAzMax);
-    elseif (boreAzMin <= -pi) && (boreAzMax < pi) %wrap below
-        boreAzMin = boreAzMin + 2*pi;
-        azValid = (az > boreAzMin) | (az < boreAzMax);
-    elseif (boreAzMin > -pi) && (boreAzMax >= pi) %wrap above
-        boreAzMax = boreAzMax - 2*pi;
-        azValid = (az > boreAzMin) | (az < boreAzMax);
-    else
-        disp('Bounding Error!')
-    end
-    
-    if (boreElMin > -pi/2) && (boreElMax < pi/2) %nominal case
-        elValid = (el > boreElMin) & (el < boreElMax);
-    elseif (boreElMin <= -pi/2) && (boreElMax < pi/2) %wrap below
-        boreElMin = boreElMin + pi;
-        elValid = (el > boreElMin) | (el < boreElMax);
-    elseif (boreElMin > -pi/2) && (boreElMax >= pi/2) %wrap above
-        boreElMax = boreElMax - pi;
-        elValid = (el > boreElMin) | (el < boreElMax);
-    elseif (boreElMin <= -pi/2) && (boreElMax >= pi/2) %all points visible
-        elValid = true(length(el),1);
-    else
-        disp('Bounding Error!')
-    end
-    
-    %indicies within range of lidar
-    validIdx = azValid & elValid;
-    
-    %valid points
-    azValid = az(validIdx);
-    elValid = el(validIdx);
-    rvalid = r(validIdx);
+    %use all points
+    azValid = az;
+    elValid = el;
+    rvalid = r;
     
     for jj = 1:LidarArrayHeight
         for kk = 1:LidarArrayWidth
             
-            %create quaternion corresponding to this angle
-            Q_cam2lidarPt = angle2quatComp(LidarAzAngles(kk),LidarElAngles(jj),0,'ZYX');
+            %             %create quaternion corresponding to this angle
+            %             Q_cam2lidarPt = angle2quatComp(LidarAzAngles(kk),LidarElAngles(jj),0,'XYZ');
+            %
+            %             %create quaternion from inertial to this array point
+            %             Q_inertial2lidarPt = quatmultiply(...
+            %                 quatmultiply(Q_inertial2cam(:,matchedInertialIdxs(ii))',...
+            %                 Q_lidar2azEl), Q_cam2lidarPt);
+            %
+            %             %create euler angles for current lidar point
+            %             [ptYaw, ptPitch, ptRoll] = quat2angle(Q_inertial2lidarPt,'ZYX');
+            %
             
-            %create quaternion from inertial to this array point
-            Q_inertial2lidarPt = quatmultiply(...
-                quatmultiply(Q_inertial2cam(:,matchedInertialIdxs(ii))',...
-                Q_lidar2azEl), Q_cam2lidarPt);
+            %create vector corresponding to this lidar angle in the camera
+            %frame
+            v_lidar = zeros(3,1);
+            v_lidar(2) = -sin(LidarElAngles(jj));
+            v_xz = cos(LidarElAngles(jj));
+            v_lidar(1) = v_xz*sin(LidarAzAngles(kk));
+            v_lidar(3) = v_xz*cos(LidarAzAngles(kk));
             
-            %create euler angles for current lidar point
-            [ptYaw, ptPitch, ptRoll] = quat2angle(Q_inertial2lidarPt,'ZYX');
+            %rotate vector into the inertial frame
+            v_inert = quatrotate(quatconj(Q_inertial2cam(:,matchedInertialIdxs(ii))'),v_lidar');
+            
+            %get euler angles for bore sight
+            ptEl = asin(v_inert(3));
+            v_xy = sqrt(v_inert(1)^2 + v_inert(2)^2);
+            ptAz = atan2(v_inert(2),v_inert(1));
             
             %yaw = azimuth, but pitch = negative elevation
-            ptEl = -ptPitch;
-            ptAz = ptYaw;
+            %ptEl = -ptPitch;
+            %ptAz = ptYaw;
             
             %bounds for lidar point swath
             ptAzMin = ptAz - lidarPointSwath/2;
@@ -210,15 +231,18 @@ parfor ii = imageIdx %iteration on images
             validIdxPt = azValidPt & elValidPt;
             
             %extract candidate points
-            candAz = azValid(validIdxPt);
-            candEl = elValid(validIdxPt);
-            candr = rvalid(validIdxPt);
+            candAz = az(validIdxPt);
+            candEl = el(validIdxPt);
+            candr = r(validIdxPt);
             
             %assign range
             if ~isempty(candr)
                 [ptRange, ptIdx] = min(candr);
                 LidarImages(jj,kk,ii) = ptRange;
+            else
+                disp("no match")
             end
+            
             
             %track points for debugging
             if ~isempty(candr) && trackPoints
@@ -258,8 +282,8 @@ save('LidarImages','LidarImages')
 % quiver(P_inertial2cam(1,1:100:end),P_inertial2cam(2,1:100:end),...
 %     Barrel_camInInertial(1,1:100:end),Barrel_camInInertial(2,1:100:end))
 % axis equal
-%
-%
+
+
 % figure
 % plot3(P_inertial2body(1,:),P_inertial2body(2,:),P_inertial2body(3,:))
 % hold on
@@ -271,19 +295,25 @@ save('LidarImages','LidarImages')
 % quiver3(P_inertial2cam(1,1:100:end),P_inertial2cam(2,1:100:end),P_inertial2cam(3,1:100:end),...
 %     Barrel_camInInertial(1,1:100:end),Barrel_camInInertial(2,1:100:end),Barrel_camInInertial(3,1:100:end))
 % axis equal
-%
+
+figure
+plot3(P_inertial2body(1,:),P_inertial2body(2,:),P_inertial2body(3,:))
+hold on
+plot3(P_inertial2cam(1,:),P_inertial2cam(2,:),P_inertial2cam(3,:))
+scatter3(P_inertial2body(1,1),P_inertial2body(2,1),P_inertial2body(3,1),'rx')
+scatter3(pointCloud(1:100:end,1),pointCloud(1:100:end,2),pointCloud(1:100:end,3))
+xlabel('x')
+ylabel('y')
+zlabel('z')
+quiver3(P_inertial2cam(1,1:100:end),P_inertial2cam(2,1:100:end),P_inertial2cam(3,1:100:end),...
+    Barrel_camInInertial(1,1:100:end),Barrel_camInInertial(2,1:100:end),Barrel_camInInertial(3,1:100:end),0)
+axis([-5 5 -5 5 -.1 3])
+
 % figure
-% plot3(P_inertial2body(1,:),P_inertial2body(2,:),P_inertial2body(3,:))
-% hold on
-% plot3(P_inertial2cam(1,:),P_inertial2cam(2,:),P_inertial2cam(3,:))
-% scatter3(P_inertial2body(1,1),P_inertial2body(2,1),P_inertial2body(3,1))
-% scatter3(pointCloud(1:10:end,1),pointCloud(1:10:end,2),pointCloud(1:10:end,3))
+% title('first lidar image')
+% mesh(LidarImages(:,:,imageIdx))
 % xlabel('x')
 % ylabel('y')
-% zlabel('z')
-% quiver3(P_inertial2cam(1,1:100:end),P_inertial2cam(2,1:100:end),P_inertial2cam(3,1:100:end),...
-%     Barrel_camInInertial(1,1:100:end),Barrel_camInInertial(2,1:100:end),Barrel_camInInertial(3,1:100:end),0)
-% axis([-5 5 -5 5 0 3])
 
 %plot camera position and return point positions
 if trackPoints
@@ -305,7 +335,7 @@ if trackPoints
     %plot point cloud and return point positions
     figure
     scatter3(pointCloud(1:1:end,1),pointCloud(1:1:end,2),pointCloud(1:1:end,3),...
-    1,'filled')
+        1,'filled')
     hold on
     scatter3(returnPtMat(:,1), returnPtMat(:,2), returnPtMat(:,3))
     scatter3(P_inertial2body(1,1),P_inertial2body(2,1),P_inertial2body(3,1))
@@ -318,7 +348,7 @@ if trackPoints
     xlabel('x')
     ylabel('y')
     zlabel('z')
-%     axis([-6 6 -5 5 -1 3])
+    %     axis([-6 6 -5 5 -1 3])
     axis([-4.75 -4 .6 1.8 0.75 1])
 end
 
