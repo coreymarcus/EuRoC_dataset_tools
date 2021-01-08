@@ -17,6 +17,8 @@ LidarArrayHeight = 50;
 lidarPointSwath = pi/180; %1 degree lidar point return
 lidarImageRate = 1; %one to create lidar image for every camera image
 trackPoints = true; %tracks points pinged for debugging
+MuLidar = 0; %average lidar depth noise
+PLidar = .01^2; % lidar range variance, m^2
 
 %% Main
 
@@ -24,7 +26,8 @@ trackPoints = true; %tracks points pinged for debugging
 lidarFOVMax = max([LidarFOVHeight/2, LidarFOVWidth/2]);
 
 %load dataset
-datasetPath = '~/Documents/EuRoC/V2_01_easy';
+% datasetPath = '~/Documents/EuRoC/V2_01_easy';
+datasetPath = 'C:\Users\cm58349\Documents\EuRoC_data\V2_01_easy';
 addpath('quaternion');
 dataset = dataset_load(datasetPath);
 
@@ -95,6 +98,7 @@ returnPtMat = [];
 %images to operate on
 imageIdx = 1:lidarImageRate:L;
 % imageIdx = L-150;
+% imageIdx = 1;
 
 parfor ii = imageIdx %iteration on images
     
@@ -157,6 +161,9 @@ parfor ii = imageIdx %iteration on images
     azValid = az;
     elValid = el;
     rvalid = r;
+    
+    %generate noise
+    range_noise = mvnrnd(MuLidar*ones(LidarArrayHeight*LidarArrayWidth,1), PLidar*eye(LidarArrayHeight*LidarArrayWidth));
     
     for jj = 1:LidarArrayHeight
         for kk = 1:LidarArrayWidth
@@ -237,7 +244,19 @@ parfor ii = imageIdx %iteration on images
             
             %assign range
             if ~isempty(candr)
+                
+                %get point
                 [ptRange, ptIdx] = min(candr);
+                
+                %add noise
+                ptRange = ptRange + range_noise(jj + (kk-1)*LidarArrayHeight);
+                
+                %make sure it is not less than zero
+                if(ptRange < 0)
+                    ptRange = 0;
+                end
+                
+                %assign
                 LidarImages(jj,kk,ii) = ptRange;
             else
                 disp("no match")
