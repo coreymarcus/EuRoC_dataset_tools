@@ -17,6 +17,8 @@ LidarArrayHeight = 5;
 lidarPointSwath = pi/180; %1 degree lidar point return
 lidarImageRate = 1; %one to create lidar image for every camera image
 trackPoints = true; %tracks points pinged for debugging
+MuLidar = 0; %average lidar depth noise
+PLidar = .01^2; % lidar range variance, m^2
 
 %% Main
 
@@ -216,7 +218,22 @@ parfor ii = imageIdx %iteration on images
             
             %assign range
             if ~isempty(candr)
+                
+                %generate noise
+                range_noise = mvnrnd(MuLidar, PLidar);
+                
+                %get point
                 [ptRange, ptIdx] = min(candr);
+                
+                %add noise
+                ptRange = ptRange + range_noise;
+                
+                %make sure it is not less than zero
+                if(ptRange < 0)
+                    ptRange = 0;
+                end
+                
+                %assign
                 LidarImages(jj,kk,ii) = ptRange;
             end
             
