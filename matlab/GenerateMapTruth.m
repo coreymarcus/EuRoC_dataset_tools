@@ -10,10 +10,10 @@ clc
 %% Options
 
 % Specify the frames to generate truth for
-targs = 73:74;
+targs = 73:173;
 
 % search swath
-searchswath = pi/180;
+searchswath = 2*pi/180;
 
 %% Main
 
@@ -169,3 +169,10 @@ for ii = targs
     % increment target index
     targidx = targidx + 1;
 end
+
+% Save data
+save('MapTruthData.mat','truthimages','-v7.3');
+
+%% Plotting
+figure
+mesh(truthimages(:,:,1))
