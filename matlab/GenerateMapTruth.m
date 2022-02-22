@@ -18,9 +18,11 @@ searchswath = pi/180;
 %% Main
 
 % load dataset
-datasetPath = '/home/cm58349/Documents/EuRoC/V2_01_easy';
+datasetPath = '/home/cm58349/Documents/EuRoC_data/V2_01_easy'; % atlantis config
 % datasetPath = 'C:\Users\cm58349\Documents\EuRoC_data\V2_01_easy';
-% datasetPath = 'C:\Users\corey\Documents\SharedFolder\EuRoC_data\V2_01_easy';
+% datasetPath =
+% 'C:\Users\corey\Documents\SharedFolder\EuRoC_data\V2_01_easy'; % personal
+% config
 addpath('quaternion');
 dataset = dataset_load(datasetPath);
 
