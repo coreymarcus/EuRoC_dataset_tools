@@ -18,7 +18,7 @@ searchswath = pi/180;
 %% Main
 
 % load dataset
-datasetPath = '~/Documents/EuRoC/V2_01_easy';
+datasetPath = '/home/cm58349/Documents/EuRoC/V2_01_easy';
 % datasetPath = 'C:\Users\cm58349\Documents\EuRoC_data\V2_01_easy';
 % datasetPath = 'C:\Users\corey\Documents\SharedFolder\EuRoC_data\V2_01_easy';
 addpath('quaternion');
