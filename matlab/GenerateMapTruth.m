@@ -7,6 +7,8 @@ clear
 close all
 clc
 
+parpool('local',12);
+
 %% Options
 
 % Specify the frames to generate truth for
