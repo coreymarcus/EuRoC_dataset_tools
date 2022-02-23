@@ -7,7 +7,7 @@ clear
 close all
 clc
 
-parpool('local',12);
+parpool('local',8);
 
 %% Options
 
