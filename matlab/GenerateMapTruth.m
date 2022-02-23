@@ -95,7 +95,7 @@ for ii = targs
         disp(jj)
         for kk = 1:width
             % Create a vector corresponding to this camera pixel
-            v_cam = Kinv*[jj; kk; 1];
+            v_cam = Kinv*[kk; jj; 1];
             v_cam = v_cam/norm(v_cam);
 
             % rotate vector into the inertial frame
