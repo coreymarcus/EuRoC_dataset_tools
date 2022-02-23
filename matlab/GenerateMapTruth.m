@@ -10,7 +10,8 @@ clc
 %% Options
 
 % Specify the frames to generate truth for
-targs = 73:173;
+% targs = 73:173;
+targs = 73 + [0 35 54]; % These frames are often chosen as keyframes
 
 % search swath
 searchswath = 2*pi/180;
