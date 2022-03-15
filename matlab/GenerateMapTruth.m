@@ -174,7 +174,7 @@ for ii = targs
 end
 
 % Save data
-save('MapTruthData.mat','truthimages','-v7.3');
+save('MapTruthData.mat','truthimages','targs','-v7.3');
 
 %% Plotting
 figure
