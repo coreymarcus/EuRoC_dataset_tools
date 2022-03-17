@@ -23,9 +23,7 @@ searchswath = 2*pi/180;
 % load dataset
 datasetPath = '/home/cm58349/Documents/EuRoC_data/V2_01_easy'; % atlantis config
 % datasetPath = 'C:\Users\cm58349\Documents\EuRoC_data\V2_01_easy';
-% datasetPath =
-% 'C:\Users\corey\Documents\SharedFolder\EuRoC_data\V2_01_easy'; % personal
-% config
+% datasetPath = 'C:\Users\corey\Documents\SharedFolder\EuRoC_data\V2_01_easy'; % personal config
 addpath('quaternion');
 dataset = dataset_load(datasetPath);
 
@@ -33,8 +31,8 @@ dataset = dataset_load(datasetPath);
 % This is the undistorted camera calibration model as reported by
 % LSD-SLAM's openCV routines
 K = [303.072       0 308.727
-      0 418.033  250.18
-      0       0       1];
+    0 418.033  250.18
+    0       0       1];
 Kinv = inv(K);
 
 % Size of the cropped images used by LSD-SLAM
@@ -88,7 +86,7 @@ targidx = 1; % target index for parfor compatibility
 for ii = targs
     %shift point cloud to camera origin
     pointCloudShift = pointCloud - P_inertial2cam(:,matchedInertialIdxs(ii))';
-    
+
     %convert point cloud to spherical coordinates centered on camera
     [az, el, r] = cart2sph(pointCloudShift(:,1),pointCloudShift(:,2),pointCloudShift(:,3));
 
@@ -127,7 +125,7 @@ for ii = targs
             else
                 warning('Bounding Error!')
             end
-            
+
             if (ptelevmin > -pi/2) && (ptelevmax < pi/2) %nominal case
                 elValidPt = (el > ptelevmin) & (el < ptelevmax);
             elseif (ptelevmin <= -pi/2) && (ptelevmax < pi/2) %wrap below
@@ -141,34 +139,38 @@ for ii = targs
             else
                 warning('Bounding Error!')
             end
-            
+
             % points within view of this particular lidar return
             valididxpt = azValidPt & elValidPt;
-            
+
             % extract candidate points
             candr = r(valididxpt);
+            candaz = az(valididxpt);
+            candel = el(valididxpt);
 
-             %assign range
+            %assign range
             if ~isempty(candr)
-                
+
                 %get point
-                [ptrange, ~] = min(candr);
-                
+                [ptrange, idx] = min(candr);
+                ptaz = candaz(idx);
+                ptel = candel(idx);
+
                 %make sure it is not less than zero
                 if(ptrange < 0)
                     ptrange = 0;
                     warning('Negative Range Found!')
                 end
-                
+
                 %assign
-                truthimages(jj,kk,targidx) = ptrange;
+                [~, ~, truthimages(jj,kk,targidx)] = sph2cart(ptaz,ptel,ptrange);
             else
                 warning("no match")
             end
-   
+
         end
     end
-    
+
     % increment target index
     targidx = targidx + 1;
 end
