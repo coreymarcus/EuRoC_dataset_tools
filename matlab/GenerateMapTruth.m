@@ -13,7 +13,8 @@ parpool('local',8);
 
 % Specify the frames to generate truth for
 % targs = 73:173;
-targs = 73 + [0 35:37 53:55 87:89]; % These frames are often chosen as keyframes
+% targs = 73 + [0 35:37 53:55 87:89]; % These frames are often chosen as keyframes
+targs = 73 + 53;
 
 % search swath
 searchswath = 2*pi/180;
@@ -167,7 +168,7 @@ for ii = targs
                 v_targ = [px, py, pz];
                 
                 % Rotate into camera frame
-                v_targ_cam = quatrotate(quatconj(Q_inertial2cam(:,matchedInertialIdxs(ii))'),v_targ);
+                v_targ_cam = quatrotate(Q_inertial2cam(:,matchedInertialIdxs(ii))',v_targ);
 
                 %assign
                 truthimages(jj,kk,targidx) = v_targ_cam(3);
