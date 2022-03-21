@@ -162,8 +162,21 @@ for ii = targs
                     warning('Negative Range Found!')
                 end
 
+                % Map point into cartesian inertial frame
+                [px, py, pz] = sph2cart(ptaz,ptel,ptrange);
+                v_targ = [px, py, pz];
+                
+                % Rotate into camera frame
+                v_targ_cam = quatrotate(quatconj(Q_inertial2cam(:,matchedInertialIdxs(ii))'),v_targ);
+
                 %assign
-                [~, ~, truthimages(jj,kk,targidx)] = sph2cart(ptaz,ptel,ptrange);
+                truthimages(jj,kk,targidx) = v_targ_cam(3);
+
+                % Make sure it is not less than zero
+                if(v_targ_cam(3) < 0)
+                    truthimages(jj,kk,targidx) = 0;
+                    warning('Negative Depth Found!')
+                end
             else
                 warning("no match")
             end
