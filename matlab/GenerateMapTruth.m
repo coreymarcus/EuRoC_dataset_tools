@@ -7,14 +7,12 @@ clear
 close all
 clc
 
-parpool('local',8);
-
 %% Options
 
 % Specify the frames to generate truth for
 % targs = 73:173;
 % targs = 73 + [0 35:37 53:55 87:89]; % These frames are often chosen as keyframes
-targs = 73 + 53;
+targs = 73;
 
 % search swath
 searchswath = 2*pi/180;
@@ -22,9 +20,9 @@ searchswath = 2*pi/180;
 %% Main
 
 % load dataset
-datasetPath = '/home/cm58349/Documents/EuRoC_data/V2_01_easy'; % atlantis config
+% datasetPath = '/home/cm58349/Documents/EuRoC_data/V2_01_easy'; % atlantis config
 % datasetPath = 'C:\Users\cm58349\Documents\EuRoC_data\V2_01_easy';
-% datasetPath = 'C:\Users\corey\Documents\SharedFolder\EuRoC_data\V2_01_easy'; % personal config
+datasetPath = 'C:\Users\corey\Documents\SharedFolder\EuRoC_data\V2_01_easy'; % personal config
 addpath('quaternion');
 dataset = dataset_load(datasetPath);
 
